@@ -1,7 +1,7 @@
 <template>
   <section class="has-padding-top">
     <div class="container">
-      <div class="columns is-centered">
+      <div class="columns  is-mobile is-centered">
         <div class="column is-narrow">
           <b-field>
             <b-checkbox-button
@@ -17,7 +17,7 @@
       </div>
     </div>
     <div class="container">
-      <div class="columns is-centered">
+      <div class="columns is-mobile is-centered">
         <div class="column is-narrow">
           <b-datepicker
             v-model="dates"
@@ -27,39 +27,48 @@
             indicators="bars"
             :events="events"
             :mobile-native="false"
-            :show-number-week="true"
+            :show-week-number="!isMobile"
             :month-names="monthNames"
             :day-names="dayNames"
+            :min-date="minDate"
+            :max-date="maxDate"
             range
           />
         </div>
       </div>
     </div>
     <div class="container">
-      <div class="columns is-centered">
+      <div class="columns is-mobile is-centered">
         <div class="column is-narrow">
-          <p><b>Tage:</b> {{ dayCountInFilteredRange }}</p>
+          <p><b>Von:</b> {{ dates[0] | date }}</p>
+        </div>
+        <div class="column is-narrow">
+          <p><b>Bis:</b> {{ dates[1] | date }}</p>
         </div>
       </div>
     </div>
     <div class="container">
-      <div class="columns is-centered">
-        <div class="column is-narrow">
-          <b-field label="Einzelbetrag">
+      <div class="columns is-mobile is-centered">
+        <div class="column is-narrow has-text-right">
+          <b-field label="Einzelbetrag" label-position="on-border">
             <b-input
               v-model="einzelbetrag"
               type="number"
               min="0"
               step="0.1"
-            ></b-input>
+              icon="euro-sign"
+            />
           </b-field>
         </div>
       </div>
     </div>
     <div class="container">
-      <div class="columns is-centered">
+      <div class="columns is-mobile is-centered">
         <div class="column is-narrow">
-          <p><b>Gesamtbetrag:</b> {{ gesamtbetrag }}</p>
+          <p><b>Tage:</b> {{ dayCountInFilteredRange }}</p>
+        </div>
+        <div class="column is-narrow">
+          <p><b>Betrag:</b> {{ gesamtbetrag | euro }}</p>
         </div>
       </div>
     </div>
@@ -68,7 +77,7 @@
 
 <script>
 import locale from "date-fns/esm/locale/de";
-import { getDay, eachDayOfInterval, parseISO } from "date-fns";
+import { getDay, eachDayOfInterval, parseISO, lastDayOfYear } from "date-fns";
 
 export default {
   name: "app",
@@ -83,6 +92,22 @@ export default {
     };
   },
   computed: {
+    isMobile() {
+      return window.innerWidth <= 768;
+    },
+    minDate() {
+      return this.years.length > 0 ? new Date(this.years[0], 0) : undefined;
+    },
+    maxDate() {
+      return this.years.length > 0
+        ? lastDayOfYear(new Date(this.years[this.years.length - 1], 0))
+        : undefined;
+    },
+    years() {
+      const currentYear = new Date().getFullYear();
+
+      return [currentYear - 1, currentYear, currentYear + 1];
+    },
     gesamtbetrag() {
       return this.einzelbetrag * this.dayCountInFilteredRange;
     },
@@ -138,10 +163,8 @@ export default {
     }
   },
   mounted() {
-    const currentYear = new Date().getFullYear();
-
     Promise.all(
-      [currentYear - 1, currentYear, currentYear + 1].map(year =>
+      this.years.map(year =>
         fetch(
           `https://feiertage-api.de/api/?jahr=${year}&nur_land=${this.bundesland}`
         )
@@ -160,9 +183,14 @@ export default {
       .catch(console.error); // eslint-disable-line no-console
 
     Promise.all(
-      [currentYear - 1, currentYear, currentYear + 1].map(year =>
+      this.years.map(year =>
         fetch(
-          `https://cors-anywhere.herokuapp.com/ferien-api.de/api/v1/holidays/${this.bundesland}/${year}` // TODO: change, if ferien-api delivers cors headers
+          `https://cors-anywhere.herokuapp.com/ferien-api.de/api/v1/holidays/${this.bundesland}/${year}`, // TODO: change, if ferien-api delivers cors headers
+          {
+            headers: {
+              Origin: window.location.origin
+            }
+          }
         )
       )
     )
@@ -184,6 +212,23 @@ export default {
         });
       })
       .catch(console.error); // eslint-disable-line no-console
+  },
+  filters: {
+    euro: function(value) {
+      return new Intl.NumberFormat("de-DE", {
+        style: "currency",
+        currency: "EUR"
+      }).format(value);
+    },
+    date(value) {
+      return value
+        ? Intl.DateTimeFormat(window.navigator.language, {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit"
+          }).format(value)
+        : "";
+    }
   }
 };
 </script>
