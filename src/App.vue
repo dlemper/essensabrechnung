@@ -87,7 +87,6 @@ export default {
       return this.einzelbetrag * this.dayCountInFilteredRange;
     },
     events() {
-      console.log("events", [...this.feiertage, ...this.ferien]);
       return [...this.feiertage, ...this.ferien];
     },
     dayNames() {
@@ -107,7 +106,7 @@ export default {
     },
     dayCountInFilteredRange() {
       if (this.dates.length > 0) {
-        console.log(
+        /*console.log(
           "filtered",
           this.feiertage.map(day => lightFormat(day, "yyyy-MM-dd")),
           eachDayOfInterval({
@@ -128,7 +127,7 @@ export default {
                   .map(day => lightFormat(day, "yyyy-MM-dd"))
                   .includes(day)
             )
-        );
+        );*/
         return eachDayOfInterval({ start: this.dates[0], end: this.dates[1] })
           .filter(day => this.checkboxGroup.includes(getDay(day)))
           .filter(day => this.feiertage.map(Number).indexOf(+day) === -1)
