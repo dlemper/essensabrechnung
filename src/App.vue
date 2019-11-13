@@ -68,7 +68,7 @@
 
 <script>
 import locale from "date-fns/esm/locale/de";
-import { getDay, eachDayOfInterval, parseISO, lightFormat } from "date-fns";
+import { getDay, eachDayOfInterval, parseISO } from "date-fns";
 
 export default {
   name: "app",
