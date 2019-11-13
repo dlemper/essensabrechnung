@@ -1,45 +1,74 @@
 <template>
-  <div id="app" class="container">
-    <section>
-      <b-field>
-        <b-checkbox-button
-          v-for="(day, index) in weekDayNames"
-          :key="index"
-          v-model="checkboxGroup"
-          :native-value="index"
-        >
-          {{ day }}
-        </b-checkbox-button>
-      </b-field>
-    </section>
-    <br />
-    <b-datepicker
-      v-model="dates"
-      inline
-      :unselectable-days-of-week="[0, 6]"
-      :first-day-of-week="1"
-      indicators="bars"
-      :events="events"
-      :mobile-native="false"
-      :show-number-week="true"
-      :month-names="monthNames"
-      :day-names="dayNames"
-      range
-    />
-    <br />
-    <p><b>Tage:</b> {{ dayCountInFilteredRange }}</p>
-    <section>
-      <b-field label="Einzelbetrag">
-        <b-input v-model="einzelbetrag" type="number"></b-input>
-      </b-field>
-    </section>
-    <p><b>Gesamtbetrag:</b> {{ gesamtbetrag }}</p>
-  </div>
+  <section class="has-padding-top">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-narrow">
+          <b-field>
+            <b-checkbox-button
+              v-for="item in weekDayNames"
+              :key="weekDayNames.indexOf(item)"
+              v-model="checkboxGroup"
+              :native-value="item.index"
+            >
+              {{ item.day }}
+            </b-checkbox-button>
+          </b-field>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-narrow">
+          <b-datepicker
+            v-model="dates"
+            inline
+            :unselectable-days-of-week="[0, 6]"
+            :first-day-of-week="1"
+            indicators="bars"
+            :events="events"
+            :mobile-native="false"
+            :show-number-week="true"
+            :month-names="monthNames"
+            :day-names="dayNames"
+            range
+          />
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-narrow">
+          <p><b>Tage:</b> {{ dayCountInFilteredRange }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-narrow">
+          <b-field label="Einzelbetrag">
+            <b-input
+              v-model="einzelbetrag"
+              type="number"
+              min="0"
+              step="0.1"
+            ></b-input>
+          </b-field>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-narrow">
+          <p><b>Gesamtbetrag:</b> {{ gesamtbetrag }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
 </template>
 
 <script>
 import locale from "date-fns/esm/locale/de";
-import { getDay, eachDayOfInterval, parseISO } from "date-fns";
+import { getDay, eachDayOfInterval, parseISO, lightFormat } from "date-fns";
 
 export default {
   name: "app",
@@ -72,16 +101,33 @@ export default {
       );
     },
     weekDayNames() {
-      return this.dayNames.filter((items, index) => index !== 0 && index !== 6);
+      return this.dayNames
+        .map((day, index) => ({ day, index }))
+        .filter((items, index) => index !== 0 && index !== 6);
     },
     dayCountInFilteredRange() {
       if (this.dates.length > 0) {
         console.log(
           "filtered",
-          eachDayOfInterval({ start: this.dates[0], end: this.dates[1] })
+          this.feiertage.map(day => lightFormat(day, "yyyy-MM-dd")),
+          eachDayOfInterval({
+            start: this.dates[0],
+            end: this.dates[1]
+          })
             .filter(day => this.checkboxGroup.includes(getDay(day)))
-            .filter(day => this.feiertage.map(Number).indexOf(+day) === -1)
-            .filter(day => this.ferien.map(Number).indexOf(+day) === -1)
+            .map(day => lightFormat(day, "yyyy-MM-dd"))
+            .filter(
+              day =>
+                !this.feiertage
+                  .map(day => lightFormat(day, "yyyy-MM-dd"))
+                  .includes(day)
+            )
+            .filter(
+              day =>
+                !this.ferien
+                  .map(day => lightFormat(day, "yyyy-MM-dd"))
+                  .includes(day)
+            )
         );
         return eachDayOfInterval({ start: this.dates[0], end: this.dates[1] })
           .filter(day => this.checkboxGroup.includes(getDay(day)))
@@ -142,3 +188,9 @@ export default {
   }
 };
 </script>
+
+<style>
+.has-padding-top {
+  padding-top: 0.75rem;
+}
+</style>
