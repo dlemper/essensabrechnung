@@ -5,11 +5,11 @@ import Buefy from "buefy";
 import "./assets/scss/app.scss";
 
 Vue.use(Buefy, {
-  defaultIconPack: "fas"
+  defaultIconPack: "fas",
 });
 
 Vue.config.productionTip = false;
 
 new Vue({
-  render: h => h(App)
+  render: (h) => h(App),
 }).$mount("#app");
